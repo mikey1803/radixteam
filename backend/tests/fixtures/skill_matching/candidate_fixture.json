@@ -1,0 +1,40 @@
+{
+  "id": "cand-001",
+  "name": "Asha Verma",
+  "email": "asha.verma@example.com",
+  "skills": ["Python", "FastAPI", "Docker", "PyTorch", "SQL", "Kubernetes", "Machine Learning"],
+  "experience": [
+    {
+      "company": "Acme Analytics",
+      "title": "Backend Engineer",
+      "start_date": "2022-03-01",
+      "end_date": "2024-06-30",
+      "description": "Built and maintained backend services for a data platform.",
+      "technologies": ["Python", "FastAPI", "SQL", "Docker"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Image Classifier",
+      "description": "Trained and deployed a CNN for defect detection.",
+      "technologies": ["PyTorch", "Python"],
+      "url": "https://github.com/example/image-classifier"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Kubernetes Fundamentals",
+      "issuer": "Linux Foundation",
+      "date": "2023-11-01"
+    }
+  ],
+  "education": [
+    {
+      "institution": "State University",
+      "degree": "B.Tech",
+      "field_of_study": "Computer Science"
+    }
+  ],
+  "completeness_score": 0.82,
+  "profile_status": "Complete"
+}

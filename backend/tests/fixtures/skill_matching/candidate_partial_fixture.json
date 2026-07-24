@@ -1,0 +1,20 @@
+{
+  "id": "cand-003",
+  "name": "Partial Match Candidate",
+  "skills": ["Python", "FastAPI", "SQL"],
+  "experience": [
+    {
+      "company": "Beta Corp",
+      "title": "Software Engineer",
+      "start_date": "2021-01-01",
+      "end_date": "2023-12-31",
+      "description": "Built backend services.",
+      "technologies": ["Python", "FastAPI", "SQL"]
+    }
+  ],
+  "projects": [],
+  "certifications": [],
+  "education": [],
+  "completeness_score": 0.6,
+  "profile_status": "Complete"
+}
