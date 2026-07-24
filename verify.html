@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RadixTeam — API Status</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6366f1, #a78bfa, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .logo p {
+      color: #6b6b80;
+      font-size: 0.85rem;
+      margin-top: 0.4rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8b8ba0;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #2a2a3a;
+      transition: background 0.4s ease;
+    }
+
+    .status-dot.ok {
+      background: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+      animation: pulse-green 2s infinite;
+    }
+
+    .status-dot.error {
+      background: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
+
+    .status-dot.loading {
+      background: #eab308;
+      animation: pulse-yellow 1s infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+      50% { box-shadow: 0 0 14px rgba(34, 197, 94, 0.7); }
+    }
+
+    @keyframes pulse-yellow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .response-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #a78bfa;
+      white-space: pre-wrap;
+      word-break: break-all;
+      min-height: 48px;
+      transition: border-color 0.3s ease;
+    }
+
+    .response-box.ok { border-color: rgba(34, 197, 94, 0.2); }
+    .response-box.error { border-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 0.85rem;
+      margin-top: 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      letter-spacing: 0.3px;
+      transition: transform 0.15s ease, box-shadow 0.3s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn:active { transform: translateY(0); }
+
+    .meta {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: #3a3a4a;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="logo">
+      <h1>🚀 RadixTeam</h1>
+      <p>API Status Dashboard</p>
+    </div>
+
+    <!-- Root Endpoint -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">GET /</span>
+        <span class="status-dot" id="dot-root"></span>
+      </div>
+      <div class="response-box" id="res-root">—</div>
+    </div>
+
+    <!-- Health Endpoint -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">GET /api/v1/health</span>
+        <span class="status-dot" id="dot-health"></span>
+      </div>
+      <div class="response-box" id="res-health">—</div>
+    </div>
+
+    <!-- Docs Link -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Swagger Docs</span>
+        <span class="status-dot" id="dot-docs"></span>
+      </div>
+      <div class="response-box" id="res-docs">—</div>
+    </div>
+
+    <button class="btn" onclick="runChecks()">⚡ Run All Checks</button>
+
+    <p class="meta">Backend: http://127.0.0.1:8000</p>
+  </div>
+
+  <script>
+    const BASE = 'http://127.0.0.1:8000';
+
+    async function checkEndpoint(url, dotId, resId) {
+      const dot = document.getElementById(dotId);
+      const res = document.getElementById(resId);
+      dot.className = 'status-dot loading';
+      res.className = 'response-box';
+      res.textContent = 'Fetching…';
+
+      try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        dot.className = 'status-dot ok';
+        res.className = 'response-box ok';
+        res.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        dot.className = 'status-dot error';
+        res.className = 'response-box error';
+        res.textContent = '❌ ' + err.message + '\n\nIs the backend running?\nuvicorn app.main:app --reload';
+      }
+    }
+
+    async function checkDocs() {
+      const dot = document.getElementById('dot-docs');
+      const res = document.getElementById('res-docs');
+      dot.className = 'status-dot loading';
+      res.textContent = 'Checking…';
+
+      try {
+        const resp = await fetch(BASE + '/docs');
+        if (resp.ok) {
+          dot.className = 'status-dot ok';
+          res.className = 'response-box ok';
+          res.innerHTML = '✅ Swagger UI available at:\n<a href="' + BASE + '/docs" target="_blank" style="color:#6366f1">' + BASE + '/docs</a>';
+        } else {
+          throw new Error('Status ' + resp.status);
+        }
+      } catch (err) {
+        dot.className = 'status-dot error';
+        res.className = 'response-box error';
+        res.textContent = '❌ ' + err.message;
+      }
+    }
+
+    function runChecks() {
+      checkEndpoint(BASE + '/', 'dot-root', 'res-root');
+      checkEndpoint(BASE + '/api/v1/health', 'dot-health', 'res-health');
+      checkDocs();
+    }
+
+    // Auto-run on load
+    runChecks();
+  </script>
+
+</body>
+</html>
