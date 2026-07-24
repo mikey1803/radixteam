@@ -6,6 +6,9 @@ Shared FastAPI dependency-injection providers used across module routers.
 
 from functools import lru_cache
 from typing import Optional
+import uuid
+
+from fastapi import Request
 
 from app.core.ai_provider import AICallError, AIProvider, AnthropicAIProvider
 
@@ -27,3 +30,8 @@ def get_ai_provider() -> Optional[AIProvider]:
         return AnthropicAIProvider()
     except AICallError:
         return None
+
+
+def get_request_id(request: Request) -> str:
+    """Read the request ID a middleware already assigned, or mint one."""
+    return request.headers.get("X-Request-ID", str(uuid.uuid4()))

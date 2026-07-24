@@ -59,3 +59,22 @@ def get_logger(module_name: str) -> logging.Logger:
         logger.propagate = False
 
     return logger
+
+
+def setup_logging(level: int = logging.DEBUG) -> None:
+    """
+    Configure the root logger so third-party/library loggers also emit
+    through the request_id format. Optional — get_logger() already
+    configures its own logger correctly without this being called.
+    """
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(
+        logging.Formatter(
+            fmt="%(asctime)s | %(request_id)s | %(name)s | %(levelname)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
+    handler.addFilter(RequestIdFilter())
+    root = logging.getLogger()
+    root.setLevel(level)
+    root.handlers = [handler]

@@ -21,6 +21,7 @@ from app.core.logging import get_logger, set_request_id
 from app.db.base import Base
 from app.db.session import engine
 from app.shared.exceptions import (
+    AppError,
     TalenciaBaseError,
     ValidationError,
     NotFoundError,
@@ -72,6 +73,7 @@ app.add_middleware(
 async def request_id_middleware(request: Request, call_next):
     """Assign a unique request ID to every incoming request."""
     request_id = set_request_id()
+    request.state.request_id = request_id
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
     return response
@@ -149,6 +151,16 @@ async def talencia_base_error_handler(request: Request, exc: TalenciaBaseError):
     )
 
 
+@app.exception_handler(AppError)
+async def app_error_handler(request: Request, exc: AppError):
+    """Catch-all for the AppError hierarchy (jd-analytics, resume-parser, talent-check)."""
+    logger.error(
+        f"{exc.category}: {exc.message}",
+        extra={"request_id": getattr(request.state, "request_id", "-")},
+    )
+    return JSONResponse(status_code=exc.status_code, content=exc.to_response())
+
+
 @app.exception_handler(Exception)
 async def general_error_handler(request: Request, exc: Exception):
     """Catch-all for unhandled exceptions → 500."""
@@ -179,3 +191,9 @@ def health_check():
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,
     }
+
+
+@app.get("/health", tags=["Health"])
+def health():
+    """Lightweight health probe, includes active AI provider mode."""
+    return {"success": True, "data": {"status": "ok", "ai_mode": settings.AI_PROVIDER_MODE}}
