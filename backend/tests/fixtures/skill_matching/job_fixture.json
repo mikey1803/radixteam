@@ -1,0 +1,7 @@
+{
+  "id": "job-101",
+  "title": "Backend Engineer",
+  "seniority": "mid",
+  "required_skills": ["Python", "FastAPI", "Docker", "SQL"],
+  "preferred_skills": ["Kubernetes", "TensorFlow"]
+}

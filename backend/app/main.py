@@ -1,8 +1,9 @@
 """
 Talencia — FastAPI Application Entry Point.
 
-Registers all module routers, global exception handlers,
-and startup events. This is the single entry point for the backend.
+Registers all module routers (via app.api.router's aggregation), global
+exception handlers, and startup events. This is the single entry point
+for the backend.
 
 Run with:
     uvicorn app.main:app --reload
@@ -14,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.router import router as api_router
 from app.core.config import get_settings
 from app.core.logging import get_logger, set_request_id
 from app.db.base import Base
@@ -25,9 +27,6 @@ from app.shared.exceptions import (
     DuplicateError,
     DatabaseError,
 )
-
-# Import module routers
-from modules.profile_builder.api import router as profile_router
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -48,7 +47,7 @@ async def lifespan(app: FastAPI):
 # ─── Create FastAPI App ─────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Talencia",
+    title=settings.APP_NAME,
     description="AI-Powered Talent Intelligence Platform",
     version=settings.APP_VERSION,
     docs_url="/docs",
@@ -136,6 +135,20 @@ async def database_error_handler(request: Request, exc: DatabaseError):
     )
 
 
+@app.exception_handler(TalenciaBaseError)
+async def talencia_base_error_handler(request: Request, exc: TalenciaBaseError):
+    """Catch-all for any other shared exception type → 500."""
+    logger.error(f"Application Error | {exc.message}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "message": exc.message,
+            "errors": exc.errors,
+        },
+    )
+
+
 @app.exception_handler(Exception)
 async def general_error_handler(request: Request, exc: Exception):
     """Catch-all for unhandled exceptions → 500."""
@@ -152,7 +165,7 @@ async def general_error_handler(request: Request, exc: Exception):
 
 # ─── Register Routers ───────────────────────────────────────────────────
 
-app.include_router(profile_router)
+app.include_router(api_router)
 
 
 # ─── Health Check ────────────────────────────────────────────────────────

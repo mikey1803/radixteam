@@ -4,6 +4,7 @@ Talencia — Database Session Management.
 Provides engine, session factory, and get_db dependency for FastAPI.
 """
 
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator

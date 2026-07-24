@@ -1,0 +1,7 @@
+{
+  "id": "cand-002",
+  "name": "Sparse Candidate",
+  "skills": ["JavaScript"],
+  "completeness_score": 0.2,
+  "profile_status": "Incomplete"
+}
