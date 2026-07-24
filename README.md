@@ -94,6 +94,10 @@ cp .env.example .env          # AI_PROVIDER_MODE=mock by default — no keys nee
 uvicorn app.main:app --reload --port 8000
 ```
 
+Resume Parser also reads `OPENAI_API_KEY` / `OPENAI_MODEL` / `OPENAI_BASE_URL`
+(falls back to rule-based extraction without a key) and `GEMINI_API_KEY` as
+an alternative — independent of the `AI_PROVIDER_MODE` used by JD Analytics.
+
 Visit `http://localhost:8000/health` — should return
 `{"success": true, "data": {"status": "ok", "ai_mode": "mock"}}`.
 
@@ -129,7 +133,7 @@ matching all pass.)
 | JD Analytics | ✅ Fully built | Upload, validate, extract (PyMuPDF/pdfplumber/python-docx), clean, AI-extract, normalize, persist, full CRUD API, unit tests |
 | Profile Builder | ✅ Fully built | Real CRUD, merge, completeness scoring, validators |
 | Skill Matching | ✅ Fully built | Full staged matching pipeline, adapters, innovation layer, extensive tests |
-| Resume Parser | 🟡 Stub (as of this merge) | Superseded once `feature/resume-parser` merges |
+| Resume Parser | ✅ Fully built | Async extract → AI-structure → store pipeline (PyMuPDF/pdfplumber/python-docx, OpenAI/Gemini) |
 | Talent Check | 🟡 Stub (as of this merge) | Superseded once `feature/talent-check` merges |
 
 Each stub module's own `README.md` (in `backend/modules/<name>/`) has
@@ -154,7 +158,7 @@ backend/
     main.py
   modules/
     jd_analytics/    # fully built
-    resume_parser/   # stub (until feature/resume-parser merges)
+    resume_parser/   # fully built (async; imports via top-level backend./shared. packages)
     profile_builder/ # fully built
     talent_check/    # stub (until feature/talent-check merges)
     skill_matching/  # fully built

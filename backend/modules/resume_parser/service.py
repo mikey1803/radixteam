@@ -1,48 +1,187 @@
-"""
-Resume Parser Service — STUB for Role 2.
+"""Service layer — orchestration for the Resume Parser module."""
 
-Whoever owns this role: reuse modules/jd_analytics/parser.py's
-extract_text()/clean_text() functions (same PDF/DOCX extraction pattern —
-per the hackathon brief "you may be able to share real code, not just a
-data format"), then swap in a resume-specific prompt. This stub returns a
-mock ExtractedSkillList (source_type="resume") that already matches the
-shared contract, so Talent Check / Skill Matching / Profile Builder can be
-wired against it today without waiting on the real implementation.
-"""
 from __future__ import annotations
 
-from app.shared.schemas.skill import ExtractedSkillList, Skill
-from .repository import ResumeRepository
+import time
+import uuid
+from datetime import datetime, timezone
+
+from shared.exceptions import DatabaseException, ValidationException
+from shared.logging import get_logger
+
+from backend.modules.resume_parser.extractor import (
+    PARSER_VERSION,
+    extract_structured_data,
+)
+from backend.modules.resume_parser.models import ParsedResumeRecord
+from backend.modules.resume_parser.parsers import extract_text, validate_file
+from backend.modules.resume_parser.repository import ResumeRepository
+from backend.modules.resume_parser.schemas import (
+    FileType,
+    ParseMetadata,
+    ParseResult,
+    ParseStatus,
+    ParsedResume,
+)
+
+logger = get_logger(__name__)
 
 
 class ResumeParserService:
-    def __init__(self, repository: ResumeRepository | None = None):
-        self.repository = repository or ResumeRepository()
+    """Orchestrates file parsing, text extraction, and LLM structuring."""
 
-    def process_upload(self, filename: str, raw_bytes: bytes) -> dict:
-        # TODO(Role 2): replace with real extraction + AI call, reusing
-        # modules/jd_analytics/parser.py's extract_text/clean_text and an
-        # AIProvider().complete_json(prompt) call, same pattern as JD Analytics.
-        mock_extracted = ExtractedSkillList(
-            source_type="resume",
-            source_file=filename,
-            skills=[
-                Skill(skill_name="Python", category_code="COD",
-                      evidence="mock stub — replace with real parsing", confidence="low"),
-                Skill(skill_name="SQL", category_code="SQL",
-                      evidence="mock stub — replace with real parsing", confidence="low"),
-            ],
-            education="Mock: B.Tech Computer Science",
-            experience="Mock: 2 years",
+    def __init__(self, repository: ResumeRepository) -> None:
+        self._repo = repository
+
+    async def parse_resume(
+        self,
+        file_bytes: bytes,
+        filename: str,
+        ai_model: str | None = None,
+        store_raw_text: bool = True,
+    ) -> ParseResult:
+        """Full pipeline: validate → extract text → LLM structure → store.
+
+        Returns a ParseResult containing structured data and metadata.
+        """
+        start = time.monotonic()
+
+        # ── Validate ─────────────────────────────────────────────
+        try:
+            ext = validate_file(filename, len(file_bytes))
+        except ValueError as exc:
+            raise ValidationException(
+                message=str(exc),
+                errors={"filename": filename},
+            ) from exc
+
+        file_type = FileType(ext.lstrip("."))
+
+        # ── Extract raw text ─────────────────────────────────────
+        try:
+            raw_text = extract_text(file_bytes, filename)
+        except ValueError as exc:
+            raise ValidationException(
+                message=f"Text extraction failed: {exc}",
+                errors={"filename": filename},
+            ) from exc
+
+        # ── LLM structured extraction ────────────────────────────
+        try:
+            structured = await extract_structured_data(raw_text, ai_model)
+        except Exception as exc:
+            logger.error("Structured extraction failed", error=str(exc))
+            raise ValidationException(
+                message=f"AI extraction failed: {exc}",
+                errors={"filename": filename},
+            ) from exc
+
+        duration_ms = (time.monotonic() - start) * 1000
+
+        # ── Build result ─────────────────────────────────────────
+        parsed_resume = ParsedResume(**structured)
+
+        metadata = ParseMetadata(
+            filename=filename,
+            file_type=file_type,
+            file_size_bytes=len(file_bytes),
+            raw_text_length=len(raw_text),
+            ai_model=ai_model,
+            parser_version=PARSER_VERSION,
+            parse_duration_ms=round(duration_ms, 2),
+            created_at=datetime.now(timezone.utc),
         )
-        record = self.repository.insert({
-            "filename": filename,
-            "extracted": mock_extracted.model_dump(),
-        })
-        return record
 
-    def get_resume(self, resume_id: str) -> dict | None:
-        return self.repository.get(resume_id)
+        # ── Store in database ────────────────────────────────────
+        parse_id = str(uuid.uuid4())
+        metadata.parse_id = parse_id
 
-    def list_resumes(self) -> list[dict]:
-        return self.repository.list()
+        try:
+            record = ParsedResumeRecord(
+                parse_id=parse_id,
+                filename=filename,
+                file_type=ext,
+                file_size_bytes=len(file_bytes),
+                raw_text=raw_text if store_raw_text else None,
+                parsed_data=structured,
+                status=ParseStatus.COMPLETED.value,
+                ai_model=ai_model,
+                parser_version=PARSER_VERSION,
+                parse_duration_ms=round(duration_ms, 2),
+                errors=[],
+                created_at=datetime.now(timezone.utc),
+            )
+            await self._repo.create(record)
+        except Exception as exc:
+            logger.error("Failed to store parse result", error=str(exc))
+            raise DatabaseException("Failed to store parse result") from exc
+
+        logger.info(
+            "Resume Parse Completed",
+            parse_id=parse_id,
+            filename=filename,
+            duration_ms=round(duration_ms, 2),
+        )
+
+        return ParseResult(
+            parsed_data=parsed_resume,
+            metadata=metadata,
+            status=ParseStatus.COMPLETED,
+        )
+
+    async def get_parse_result(self, parse_id: str) -> ParseResult:
+        """Retrieve a previous parse result by ID."""
+        record = await self._repo.get_by_id(parse_id)
+        if record is None:
+            from shared.exceptions import NotFoundException
+
+            raise NotFoundException("ParsedResumeRecord", parse_id)
+
+        return ParseResult(
+            parsed_data=ParsedResume(**record.parsed_data),
+            metadata=ParseMetadata(
+                parse_id=record.parse_id,
+                filename=record.filename,
+                file_type=FileType(record.file_type.lstrip(".")),
+                file_size_bytes=record.file_size_bytes,
+                raw_text_length=len(record.raw_text) if record.raw_text else 0,
+                ai_model=record.ai_model,
+                parser_version=record.parser_version,
+                parse_duration_ms=record.parse_duration_ms,
+                created_at=record.created_at,
+            ),
+            status=ParseStatus(record.status),
+            errors=record.errors or [],
+        )
+
+    async def list_parse_history(
+        self, limit: int = 20, offset: int = 0
+    ) -> list[ParseResult]:
+        """List recent parse results."""
+        records = await self._repo.list_records(limit=limit, offset=offset)
+        return [
+            ParseResult(
+                parsed_data=ParsedResume(**r.parsed_data),
+                metadata=ParseMetadata(
+                    parse_id=r.parse_id,
+                    filename=r.filename,
+                    file_type=FileType(r.file_type.lstrip(".")),
+                    file_size_bytes=r.file_size_bytes,
+                    ai_model=r.ai_model,
+                    parser_version=r.parser_version,
+                    parse_duration_ms=r.parse_duration_ms,
+                    created_at=r.created_at,
+                ),
+                status=ParseStatus(r.status),
+                errors=r.errors or [],
+            )
+            for r in records
+        ]
+
+    async def delete_parse_result(self, parse_id: str) -> None:
+        """Delete a parse record."""
+        deleted = await self._repo.delete(parse_id)
+        if not deleted:
+            from shared.exceptions import NotFoundException
+
+            raise NotFoundException("ParsedResumeRecord", parse_id)

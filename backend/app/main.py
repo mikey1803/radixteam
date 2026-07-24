@@ -9,7 +9,17 @@ Run with:
     uvicorn app.main:app --reload
 """
 
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+# resume_parser's own files import each other via `backend.modules.*`
+# absolute imports, so the repo root (parent of backend/) must be on
+# sys.path in addition to backend/ itself (already on sys.path via
+# `uvicorn app.main:app` running with cwd=backend/).
+_repo_root = str(Path(__file__).resolve().parent.parent.parent)
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -28,6 +38,7 @@ from app.shared.exceptions import (
     DuplicateError,
     DatabaseError,
 )
+from shared.exceptions import AppException
 
 settings = get_settings()
 logger = get_logger(__name__)
@@ -153,12 +164,29 @@ async def talencia_base_error_handler(request: Request, exc: TalenciaBaseError):
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError):
-    """Catch-all for the AppError hierarchy (jd-analytics, resume-parser, talent-check)."""
+    """Catch-all for the AppError hierarchy (jd-analytics, talent-check)."""
     logger.error(
         f"{exc.category}: {exc.message}",
         extra={"request_id": getattr(request.state, "request_id", "-")},
     )
     return JSONResponse(status_code=exc.status_code, content=exc.to_response())
+
+
+@app.exception_handler(AppException)
+async def app_exception_handler(request: Request, exc: AppException):
+    """Catch-all for the AppException hierarchy (resume-parser)."""
+    logger.error(
+        f"{exc.message}",
+        extra={"request_id": getattr(request.state, "request_id", "-")},
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "message": exc.message,
+            "errors": exc.details,
+        },
+    )
 
 
 @app.exception_handler(Exception)
