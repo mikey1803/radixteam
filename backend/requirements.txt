@@ -1,0 +1,15 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+python-multipart==0.0.9
+PyMuPDF==1.24.10
+pdfplumber==0.11.4
+python-docx==1.1.2
+python-dotenv==1.0.1
+
+# Optional — only needed once you switch AI_PROVIDER_MODE away from "mock"
+# google-generativeai==0.8.2
+# groq==0.11.0
+
+pytest==8.3.3
+httpx==0.27.2

@@ -1,0 +1,14 @@
+.venv/
+backend/venv/
+backend/.env
+.env
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+node_modules/
+frontend/node_modules/
+.DS_Store
+.vscode/
