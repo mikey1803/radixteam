@@ -50,7 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
 
   return (
     <div className="content-body">
-      {/* Greeting Header */}
+      {/* Sub-header status & Greeting */}
       <div className="welcome-header">
         <div className="system-status">
           <ChevronLeft size={14} />
@@ -91,7 +91,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
             <span className="tag-pill">LLM Tuning</span>
             <span className="tag-pill">PyTorch</span>
             <span className="tag-pill">NLP</span>
-            <span className="tag-pill" style={{ color: '#a78bfa' }}>
+            <span className="tag-pill" style={{ color: '#a78bfa', borderColor: 'rgba(167, 139, 250, 0.3)' }}>
               +9 more
             </span>
           </div>
@@ -109,17 +109,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
           <div
             style={{
               display: 'flex',
-              justifyBinding: 'space-between',
+              justifyContent: 'space-between',
               fontSize: '0.75rem',
               color: '#94a3b8',
               marginTop: '0.5rem',
             }}
           >
-            <span>AWS (Advanced)</span>
-            <span style={{ marginLeft: 'auto' }}>4 items</span>
+            <span style={{ fontWeight: 600 }}>AWS (Advanced)</span>
+            <span style={{ color: '#64748b' }}>4 items</span>
           </div>
           <div className="progress-bar-bg" style={{ marginTop: '0.5rem' }}>
-            <div className="progress-bar-fill" style={{ width: '75%' }}></div>
+            <div className="progress-bar-fill" style={{ width: '75%', background: 'linear-gradient(90deg, #7c3aed, #a855f7)' }}></div>
           </div>
         </div>
 
@@ -141,14 +141,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
             >
               92%
             </span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#34d399' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#10b981' }}>
               Excellent
             </span>
           </div>
           <div className="progress-bar-bg" style={{ marginTop: '1.25rem' }}>
             <div
               className="progress-bar-fill"
-              style={{ width: '92%', background: 'linear-gradient(90deg, #7c3aed, #10b981)' }}
+              style={{ width: '92%', background: 'linear-gradient(90deg, #6366f1, #10b981)' }}
             ></div>
           </div>
         </div>
@@ -160,10 +160,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
         <div className="table-card">
           <div className="table-header-flex">
             <h2 className="table-title">Recent Analyses</h2>
-            <a href="#history" className="view-history-link" onClick={onNavigateToTalentCheck}>
+            <button
+              onClick={onNavigateToTalentCheck}
+              className="view-history-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
               <span>View History</span>
               <ArrowRight size={14} />
-            </a>
+            </button>
           </div>
 
           <table className="custom-table">
@@ -245,8 +249,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
               <Target size={16} style={{ color: '#a78bfa' }} />
             </div>
 
-            {/* Radar Polygon Visualization Mockup */}
+            {/* Radar Polygon Visualization */}
             <svg className="chart-placeholder-svg" viewBox="0 0 200 180">
+              {/* Outer Spider Grid */}
               <polygon
                 points="100,20 170,60 150,140 50,140 30,60"
                 fill="none"
@@ -259,13 +264,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigateToTalentCheck })
                 stroke="rgba(255,255,255,0.12)"
                 strokeWidth="1"
               />
+              {/* Spider Grid Rays */}
+              <line x1="100" y1="90" x2="100" y2="20" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+              <line x1="100" y1="90" x2="170" y2="60" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+              <line x1="100" y1="90" x2="150" y2="140" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+              <line x1="100" y1="90" x2="50" y2="140" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+              <line x1="100" y1="90" x2="30" y2="60" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+
               {/* Data Area Polygon */}
               <polygon
                 points="100,30 160,65 140,135 65,125 40,70"
-                fill="rgba(124, 58, 237, 0.25)"
+                fill="rgba(124, 58, 237, 0.28)"
                 stroke="#8b5cf6"
                 strokeWidth="2"
               />
+              {/* Data Points */}
+              <circle cx="100" cy="30" r="3" fill="#c084fc" />
+              <circle cx="160" cy="65" r="3" fill="#c084fc" />
+              <circle cx="140" cy="135" r="3" fill="#c084fc" />
+              <circle cx="65" cy="125" r="3" fill="#c084fc" />
+              <circle cx="40" cy="70" r="3" fill="#c084fc" />
+
               {/* Vertex Labels */}
               <text x="100" y="14" fill="#94a3b8" fontSize="8" textAnchor="middle">
                 Frontend
