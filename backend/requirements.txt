@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+langchain
+pydantic
+sqlalchemy
+supabase
+python-dotenv
+sentence-transformers
+openai
